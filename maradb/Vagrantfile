@@ -1,0 +1,14 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANT_VERSION = "2"
+
+Vagrant.configure(VAGRANT_VERSION) do |config|
+  
+  config.vm.box = "afeldman/mariadb"
+  
+  config.vm.network :forwarded_port, guest: 3306, host: 3306
+  config.vm.provision :shell, :path => "install.sh"
+
+  config.vm.network "private_network", ip: "10.19.17.13" 
+end
