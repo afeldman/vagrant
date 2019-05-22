@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 
+DB_ROOT_PASS="mariadb_root_password"
+DB_USER="mariadb_user"
+DB_PASS="mariadb_user_password"
+
+# install mariadb
+#mysql_install_db --user=mysql --datadir="/var/lib/mysql"
+
+#start mariadb 
+#defualt is already running in my setting
+#sudo rc-service mariadb start
+
 # set root passwort
-sudo /usr/bin/mysqladmin -u root password 'password' 
+sudo /usr/bin/mysqladmin -u root password "${DB_ROOT_PASS}"
 
-# allow remote access
-mysql -u root -ppassword -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'password' WITH GRANT OPTION;"
+#create a user and give previliges
+echo "GRANT ALL ON *.* TO ${DB_USER}@'127.0.0.1' IDENTIFIED BY '${DB_PASS}' WITH GRANT OPTION;" > /tmp/sql
+echo "GRANT ALL ON *.* TO ${DB_USER}@'localhost' IDENTIFIED BY '${DB_PASS}' WITH GRANT OPTION;" >> /tmp/sql
+echo "GRANT ALL ON *.* TO ${DB_USER}@'::1' IDENTIFIED BY '${DB_PASS}' WITH GRANT OPTION;" >> /tmp/sql
+echo "DELETE FROM mysql.user WHERE User='';" >> /tmp/sql
+echo "DROP DATABASE test;" >> /tmp/sql
+echo "FLUSH PRIVILEGES;" >> /tmp/sql
+cat /tmp/sql | mysql -u root --password="${DB_ROOT_PASS}"
 
-# drop the anonymous users
-mysql -u root -ppassword -e "DROP USER ''@'localhost';"
-mysql -u root -ppassword -e "DROP USER ''@'$(hostname)';"
-
-# drop the demo database
-mysql -u root -ppassword -e "DROP DATABASE test;"
-
-# flush
-mysql -u root -ppassword -e "FLUSH PRIVILEGES;"
+# modify the settings for size
+sudo sed -i "s|max_allowed_packet\s*=\s*1M|max_allowed_packet = ${MAX_ALLOWED_PACKET}|g" /etc/mysql/my.cnf
+sudo sed -i "s|max_allowed_packet\s*=\s*16M|max_allowed_packet = ${MAX_ALLOWED_PACKET}|g" /etc/mysql/my.cnf
 
 # restart
 sudo rc-service mysqld restart
